@@ -1,8 +1,7 @@
 # --------------
 # Initialization
 # --------------
-show(Pkg.installed("LLLplus"))
-if Pkg.installed("LLLplus")==Nothing
+if Pkg.installed("LLLplus")==nothing
     Pkg.clone("git@github.com:christianpeel/LLLplus.jl.git")
 end
 Pkg.add("PyPlot")
