@@ -20,7 +20,6 @@ before_install:
 script:
 - date
 - julia -e 'cd("test"); include("runtests.jl");'
-
 after_success:
 - julia -e 'include("benchmark/perftest.jl");'
 - git checkout $TRAVIS_BRANCH
