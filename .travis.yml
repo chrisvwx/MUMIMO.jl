@@ -1,0 +1,30 @@
+sudo: required
+language: julia
+
+notifications:
+  email: false
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_6fa3f1cccd93_key -iv $encrypted_6fa3f1cccd93_iv
+  -in .id_rsa_peelcb.enc -out .id_rsa_peelcb -d
+- chmod 600 .id_rsa_peelcb
+- eval "$(ssh-agent)"
+- ssh-add .id_rsa_peelcb
+- git config user.email "peelcb@gmail.com"
+- git config user.name "Travis build"
+- git config --global push.default simple
+- git remote add deploy git@github.com:christianpeel/LDPCsim.jl.git
+- git remote -v
+- sudo apt-get install python-matplotlib
+
+script:
+- date
+- julia -e 'cd("test"); include("runtests.jl");'
+
+after_success:
+- julia -e 'include("benchmark/perftest.jl");'
+- git checkout $TRAVIS_BRANCH
+- git status
+- git add benchmark/*.png
+- git commit -m "Performance results via Travis" -m"[skip ci]"
+- git push deploy
