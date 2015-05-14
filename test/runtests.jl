@@ -1,6 +1,7 @@
 # --------------
 # Initialization
 # --------------
+show(Pkg.installed("LLLplus"))
 if Pkg.installed("LLLplus")==Nothing
     Pkg.clone("git@github.com:christianpeel/LLLplus.jl.git")
 end
