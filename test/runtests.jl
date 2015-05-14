@@ -8,6 +8,7 @@ Pkg.add("PyPlot")
 
 include("../src/MUMIMO.jl")
 using MUMIMO
+using PyPlot
 
 
 # --------------
