@@ -9,13 +9,11 @@ receivers. Among those compared linear receivers,
 lattice-reduction-based receivers, VBLAST, and a sphere decoder. Here
 is a list of some of the receivers simulated
 * Zero-forcing linear receiver.
-* A basic
-  [LLL](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm)-based
-  receiver. 
-* A
-  [V-BLAST](https://en.wikipedia.org/wiki/Bell_Laboratories_Layered_Space-Time)
-  receiver. 
+* An linear interference-rejection-combining (IRC) receiver.
+* A basic [LLL](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm)-based receiver. 
+* A [V-BLAST](https://en.wikipedia.org/wiki/Bell_Laboratories_Layered_Space-Time) receiver. 
 * A [sphere-decoder](https://en.wikipedia.org/wiki/Lattice_problem#Sphere_decoding).
+
 The LLL, VBLAST, and sphere-decoder receiver use tools from the
 [LLLplus](https://github.com/christianpeel/LLLplus.jl) package. 
 
@@ -52,7 +50,7 @@ The second figure is the same as the first, except with eight users
 transmitting, and eight receive antennas at the receive side. In this
 case, there is more separation between the receivers, with the sphere
 decoder and VBLAST performing the best, and the LLL receiver five dB
-worse at the 10% error rate, and the linear receivers about another 5
+worse at 10% error rate, and the linear receivers about another 5
 dB worse.
 ![SER vs SNR 8 Ant](benchmark/perfVsSNRqpsk8ant.png)
 
