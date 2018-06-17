@@ -1,4 +1,4 @@
-function mimoUplink{Ti<:Integer,Tf<:FloatingPoint}(Ns::Ti,Mc::Ti,
+function mimoUplink{Ti<:Integer,Tf<:AbstractFloat}(Ns::Ti,Mc::Ti,
      M::Array{Ti,1},K::Array{Ti,1}, Ki::Array{Ti,1},Tt::Array{Ti,1},
      Td::Ti,rho::Array{Tf,1},gamma::Array{Tf,1}=[Inf],delta::Tf=0.0)
 #mimoUplink(Ns,Mc,M,K,Tt,Td,rho)
@@ -41,7 +41,7 @@ algs = []
 #end
 #println
 
-out = cell(0)
+out = []
 if length(rho)>1
   for s = 1:length(rho)
     push!(out,simQAM(Ns,Mc,M[1],K[1],Ki[1],Tt[1],Td,rho[s],gamma[1],delta,algs));
@@ -56,7 +56,7 @@ elseif length(gamma)>1
     push!(out,simQAM(Ns,Mc,M[1],K[1],Ki[1],Tt[1],Td,rho[1],gamma[s],delta,algs));
   end
   xval = gamma;
-  xlab = "\gamma (CIR in dB)";
+  xlab = "gamma (CIR in dB)";
   tstr = @sprintf("%dQAM,Ns=%d,M=%d,K=%d,Ki=%d,Tt=%d,Td=%d,SNR=%4.1f",
                  Mc,Ns,M[1],K[1],Ki[1],Tt[1],Td,rho[1]);
 elseif length(K)>1
@@ -102,8 +102,8 @@ else
   out = simQAM(Ns,Mc,M[1],K[1],Ki[1],Tt[1],Td,rho[1],gamma[1],delta,algs);
 end
 
-pColor = {"r>-","bo--","kx-.","gd-","c^--","m*-.",
-          "rs--","gp-.","bv-","kh--","c+-.","m.-"};
+pColor = ["r>-","bo--","kx-.","gd-","c^--","m*-.",
+          "rs--","gp-.","bv-","kh--","c+-.","m.-"];
 pIdx   = 1;
 
 Ns = size(out,1);
@@ -118,7 +118,7 @@ for a=1:length(out[1][2])
     end
 #    figure(1)
     semilogy(xval,ser,pColor[pIdx],label=out[1][2][a]);
-    hold(true);
+#    hold(true);
 ##     figure(2)
 ##     plot(xval,mi,pColor[pIdx]);  hold(true);
     if pIdx == length(pColor)
@@ -128,7 +128,7 @@ for a=1:length(out[1][2])
     end
 end
 
-hold(false);
+#hold(false);
 ##figure(1)
 xlabel(xlab);
 ylabel("SER");
@@ -154,7 +154,7 @@ delta   = 10.^(ddb/10); # pilot boost
 rho     = 10.^(rdb/10);
 gamma   = 10.^(gdb/10);
 if K>M
-    error("Can""t have K>M!!")
+    error("Can't have K>M!!")
 end
 T = Tt+Td;
 Ka = K+Ki;
@@ -169,7 +169,6 @@ Zi = Zreal*Mp+Zimag;
 ZZ = Zi[1:K,:];
 (C,d,Cr) = scodes(Mc,"QAM");
 gam = sqrt(2/3*(Mc-1));
-C = C[:].';
 
 #
 # Channel coefs, noise.
@@ -188,7 +187,7 @@ NN = (randn(M,T*Ns) + im*randn(M,T*Ns))*sqrt(sigmaSq/2);
 #
 St = repmat(eye(K),1,round(Int,ceil(Tt/K)));
 St = St[:,1:Tt]*sqrt(delta)
-SSi = sign(rand(Ki,Tt,Ns)-.5)/sqrt(Tt);
+SSi = sign.(rand(Ki,Tt,Ns)-.5)/sqrt(Tt);
 
 onesKT = ones(K,Td);
 ri = [1:K;];
@@ -198,7 +197,7 @@ iia = [(Ka+1):(Ka+K);]';
 
 Nalgs = 5;
 ZD = zeros(K,Td*Ns,Nalgs);
-algNames = cell(Nalgs)
+algNames = Array{Any}(Nalgs)
 
 for ix = 1:Ns
     zix = (ix-1)*Td+1:ix*Td;
@@ -245,6 +244,10 @@ for ix = 1:Ns
     Wls = Hhat/(Hhat'*Hhat);
     Zd  = mimo_slice(Wls'*Yd,onesKT,C);
     ZD[:,zix,ax] = Zd;
+# println(C)
+# println(Z[:,1:3])
+# println((Wls'*Yd)[:,1:3])
+# println(Zd[:,1:3])
 
     ax = ax+1;
     algNames[ax]= "MMSE LLL"
@@ -264,7 +267,7 @@ for ix = 1:Ns
     Sp = zeros(Complex{Float64},K,Td);
     for tt=1:Td
         for kx=1:K
-            Sp[kx,tt] = siso_demod(Yp[kx,tt] -B[kx,:]*Sp[:,tt],C);
+            Sp[kx,tt] = siso_demod(Yp[kx,tt] -B[kx,:].'*Sp[:,tt],C);
         end
     end
     ZD[:,zix,ax] = mimo_slice(P*Sp,onesKT,C);

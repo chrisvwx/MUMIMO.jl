@@ -1,12 +1,14 @@
 # --------------
 # Initialization
 # --------------
-if Pkg.installed("LLLplus")==nothing
-    Pkg.clone("git@github.com:christianpeel/LLLplus.jl.git")
+if VERSION<=v"0.6.3"
+    include("../src/MUMIMO.jl")
+else
+    using Pkg
 end
+Pkg.add("LLLplus")
 Pkg.add("PyPlot")
 
-include("../src/MUMIMO.jl")
 using MUMIMO
 using PyPlot
 
@@ -14,4 +16,5 @@ using PyPlot
 # --------------
 # Basic test
 # --------------
+#mimoUplink(1,4,[2],[2],[0],[12],1,[30.0;])
 mimoUplink(100,4,[4],[4],[0],[12],12,[-5.0:5:20;])

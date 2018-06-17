@@ -1,0 +1,8 @@
+authors = ["Christian Peel <chris.peel@ieee.org>"]
+name = "MUMIMO"
+uuid = "80a0fcb0-71d0-11e8-1aeb-8ba283d5e140"
+version = "0.1.0"
+
+[deps]
+LLLplus = "142c1900-a1c3-58ae-a66d-b187f9ca6423"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"

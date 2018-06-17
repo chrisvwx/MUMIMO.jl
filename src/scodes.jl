@@ -1,6 +1,6 @@
 
 
-roundc(r) = round(real(r)) + im*round(imag(r));
+roundc(r) = round.(real(r)) + im*round.(imag(r));
 #round{Td}(r::Td) = Td<:Complex?round(real(r)) + im*round(imag(r)):round(r);
 
 #################################################################
@@ -15,7 +15,7 @@ function scodes(M,Ctype)
 #  QAM constellations
 
 # By Christian Peel  (chris.peel@ieee.org)
-# Last Modified: Wed 13 May 15, 12:55pm
+# Last Modified: Sat 16 Jun 18, 6:29pm
 #
 
 #if nargin==0
@@ -26,7 +26,7 @@ if Ctype=="PSK"
 elseif Ctype=="QAM"
     if abs(sqrt(M)-round(sqrt(M)))< 1e-3
         # Make QAM constellations if M is a square
-        m = round(Int,sqrt(M))
+        m = round(Integer,sqrt(M))
         C = complex(zeros(m,m))
         Cr = complex([-(m-1):2:(m-1);])
         for ix = 1:m
@@ -57,7 +57,7 @@ C = C/gam;
 
 d2 = real(C[2:end]-C[1]);
 id = find(x->abs(x)>0,d2);
-d = minimum(abs(d2[id]));
+d = minimum(abs.(d2[id]));
 return (C, d, Cr, gam)
 end
 
@@ -71,10 +71,10 @@ dy = zeros(M,Mc);
 for t=1:Td
     for i = 1:Mc
         dd = Y[:,t]-H[:,t]*C[i];
-        dy[:,i] = abs(dd).^2
+        dy[:,i] = abs.(dd).^2
     end
     for m = 1:M
-        (mn,zd) = findmin(dy[m,:],2);
+        (mn,zd) = findmin(dy[m,:],1);
         Zd[m,t] = zd[1]-1.0;
     end
 end
