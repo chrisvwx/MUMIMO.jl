@@ -15,7 +15,7 @@ function scodes(M,Ctype)
 #  QAM constellations
 
 # By Christian Peel  (chris.peel@ieee.org)
-# Last Modified: Sat 16 Jun 18, 6:29pm
+# Last Modified: Sun 14 Apr 19, 6:53pm
 #
 
 #if nargin==0
@@ -55,8 +55,8 @@ C = C/gam;
   Cr = Cr/gam;
 #end
 
-d2 = real(C[2:end]-C[1]);
-id = find(x->abs(x)>0,d2);
+d2 = real(C[2:end] .- C[1]);
+id = findall(abs.(d2).>0);
 d = minimum(abs.(d2[id]));
 return (C, d, Cr, gam)
 end
@@ -74,7 +74,7 @@ for t=1:Td
         dy[:,i] = abs.(dd).^2
     end
     for m = 1:M
-        (mn,zd) = findmin(dy[m,:],1);
+        mn,zd = findmin(dy[m,:]);
         Zd[m,t] = zd[1]-1.0;
     end
 end
@@ -88,7 +88,7 @@ dy = zeros(Mc,1);
 for ix = 1:Mc
     dy[ix] = abs(y[1]-C[ix])
 end
-(m,zd) = findmin(dy);
+m,zd = findmin(dy);
 sd = C[zd];
 return sd[1]
 end

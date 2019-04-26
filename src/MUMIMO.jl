@@ -1,7 +1,10 @@
 module MUMIMO
 
+using LinearAlgebra
 using LLLplus
-using PyPlot
+using Plots
+using Printf
+using Statistics
 
 export
     mimoUplink,

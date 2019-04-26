@@ -1,8 +1,11 @@
-authors = ["Christian Peel <chris.peel@ieee.org>"]
 name = "MUMIMO"
 uuid = "80a0fcb0-71d0-11e8-1aeb-8ba283d5e140"
-version = "0.1.0"
+authors = ["Christian Peel <chris.peel@ieee.org>"]
+version = "0.2.0"
 
 [deps]
 LLLplus = "142c1900-a1c3-58ae-a66d-b187f9ca6423"
-PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
