@@ -1,6 +1,6 @@
-function mimoUplink{Ti<:Integer,Tf<:AbstractFloat}(Ns::Ti,Mc::Ti,
-     M::Array{Ti,1},K::Array{Ti,1}, Ki::Array{Ti,1},Tt::Array{Ti,1},
-     Td::Ti,rho::Array{Tf,1},gamma::Array{Tf,1}=[Inf],delta::Tf=0.0)
+function mimoUplink(Ns::Ti,Mc::Ti, M::Array{Ti,1}, K::Array{Ti,1},
+     Ki::Array{Ti,1}, Tt::Array{Ti,1}, Td::Ti, rho::Array{Tf,1},
+     gamma::Array{Tf,1}=[Inf],delta::Tf=0.0) where {Ti<:Integer,Tf<:AbstractFloat}
 #mimoUplink(Ns,Mc,M,K,Tt,Td,rho)
 #  Simulate uncoded transmission of QAM signals over a flat-fading Gaussian
 #  uplink channel, for a base station with multiple receive
@@ -42,6 +42,9 @@ algs = []
 #println
 
 out = []
+
+xscale = :identity;
+yscale = :log10;
 if length(rho)>1
   for s = 1:length(rho)
     push!(out,simQAM(Ns,Mc,M[1],K[1],Ki[1],Tt[1],Td,rho[s],gamma[1],delta,algs));
@@ -109,15 +112,15 @@ pIdx   = 1;
 Ns = size(out,1);
 
     
-#clf()
+pltT = plot(legend=:topleft);
+
 ser = zeros(Ns);
 for a=1:length(out[1][2])
     for k=1:Ns
         ser[k] = out[k][1][a];
 #        mi(k) = out(k).mi(a);
     end
-#    figure(1)
-    semilogy(xval,ser,pColor[pIdx],label=out[1][2][a]);
+    plot!(pltT,xval,ser,xscale=xscale,yscale=yscale,label=out[1][2][a],linewidth=3);
 #    hold(true);
 ##     figure(2)
 ##     plot(xval,mi,pColor[pIdx]);  hold(true);
@@ -128,14 +131,11 @@ for a=1:length(out[1][2])
     end
 end
 
-#hold(false);
-##figure(1)
-xlabel(xlab);
-ylabel("SER");
-legend(loc=3);
-grid(which="both",axis="y")
-grid(which="major",axis="x")
-title(tstr)
+plot!(pltT,xlabel=xlab,ylabel="SER")
+
+    # grid(which="both",axis="y")
+# grid(which="major",axis="x")
+# title(tstr)
 
 ## figure(2)
 ## xlabel(xlab);
@@ -143,6 +143,7 @@ title(tstr)
 ## legend(out(1).name,4);
 ## grid on;
 ## title(tstr)
+display(pltT)
 
 return
 end
@@ -150,9 +151,9 @@ end
 #######################################################################
 function simQAM(Ns,Mc,M,K,Ki,Tt,Td,rdb,gdb,ddb,algs)
 
-delta   = 10.^(ddb/10); # pilot boost
-rho     = 10.^(rdb/10);
-gamma   = 10.^(gdb/10);
+delta   = 10 .^(ddb/10); # pilot boost
+rho     = 10 .^(rdb/10);
+gamma   = 10 .^(gdb/10);
 if K>M
     error("Can't have K>M!!")
 end
@@ -167,7 +168,7 @@ Zreal = rand((0:Mp-1),K+Ki,Td*Ns);
 Zimag = rand((0:Mp-1),K+Ki,Td*Ns);
 Zi = Zreal*Mp+Zimag;
 ZZ = Zi[1:K,:];
-(C,d,Cr) = scodes(Mc,"QAM");
+C,d,Cr = scodes(Mc,"QAM");
 gam = sqrt(2/3*(Mc-1));
 
 #
@@ -185,9 +186,11 @@ NN = (randn(M,T*Ns) + im*randn(M,T*Ns))*sqrt(sigmaSq/2);
 #
 # Training signal
 #
-St = repmat(eye(K),1,round(Int,ceil(Tt/K)));
+IK = Matrix{Float64}(I,K,K) 
+IM = Matrix{Float64}(I,M,M) 
+St = repeat(IK,1,round(Int,ceil(Tt/K)));
 St = St[:,1:Tt]*sqrt(delta)
-SSi = sign.(rand(Ki,Tt,Ns)-.5)/sqrt(Tt);
+SSi = sign.(rand(Ki,Tt,Ns) .- .5)/sqrt(Tt);
 
 onesKT = ones(K,Td);
 ri = [1:K;];
@@ -197,17 +200,17 @@ iia = [(Ka+1):(Ka+K);]';
 
 Nalgs = 5;
 ZD = zeros(K,Td*Ns,Nalgs);
-algNames = Array{Any}(Nalgs)
+algNames = Array{Any}(missing,Nalgs)
 
 for ix = 1:Ns
-    zix = (ix-1)*Td+1:ix*Td;
-    N = NN[:,(ix-1)*T+1:ix*T];
-    Z = Zi[:,zix];
-    Si = SSi[:,:,ix];
-    Sti = [St; Si];
-    Sd = C[Z+1];
-    S = [Sti Sd];
-    H = HH[:,:,ix];
+    zix = (ix-1)*Td+1:ix*Td
+    N = NN[:,(ix-1)*T+1:ix*T]
+    Z = Zi[:,zix]
+    Si = SSi[:,:,ix]
+    Sti = [St; Si]
+    Sd = C[Z.+1]
+    S = [Sti Sd]
+    H = HH[:,:,ix]
     
     Y = H*S+N; # Channel
     Yt = Y[:,1:Tt];
@@ -244,17 +247,53 @@ for ix = 1:Ns
     Wls = Hhat/(Hhat'*Hhat);
     Zd  = mimo_slice(Wls'*Yd,onesKT,C);
     ZD[:,zix,ax] = Zd;
-# println(C)
-# println(Z[:,1:3])
-# println((Wls'*Yd)[:,1:3])
-# println(Zd[:,1:3])
+
+    # ax = ax+1;
+    # algNames[ax]= "MMSE size"
+    # Bw, Tw = sizereduction([Hhat; sigmaSq*I]);
+    # Ti = inv(Tw);
+    # Wlr = Bw/(Bw'*Bw);
+    # Ztmp = Wlr'*[Yd; zeros(K,Td)];
+    # Stmp = roundc((Ztmp*gam-(1+im)*Ti*onesKT)/2)*2 +(1+im)*Ti*onesKT;
+    # Zd = mimo_slice(Tw*Stmp/gam,onesKT,C);
+    # ZD[:,zix,ax] = Zd;
+
+    # ax = ax+1;
+    # algNames[ax]= "MMSE brun"
+    # Bw, Tw = brun([Hhat; sigmaSq*I]);
+    # Ti = inv(Tw);
+    # Wlr = Bw/(Bw'*Bw);
+    # Ztmp = Wlr'*[Yd; zeros(K,Td)];
+    # Stmp = roundc((Ztmp*gam-(1+im)*Ti*onesKT)/2)*2 +(1+im)*Ti*onesKT;
+    # Zd = mimo_slice(Tw*Stmp/gam,onesKT,C);
+    # ZD[:,zix,ax] = Zd;
 
     ax = ax+1;
     algNames[ax]= "MMSE LLL"
-    (Bw, Tw, t1, t2) = lll([Hhat; sigmaSq*complex(eye(K))]);
+    Bw, Tw = lll([Hhat; sigmaSq*I]);
     Ti = inv(Tw);
-    Wlll = Bw/(Bw'*Bw);
-    Ztmp = Wlll'*[Yd; zeros(K,Td)];
+    Wlr = Bw/(Bw'*Bw);
+    Ztmp = Wlr'*[Yd; zeros(K,Td)];
+    Stmp = roundc((Ztmp*gam-(1+im)*Ti*onesKT)/2)*2 +(1+im)*Ti*onesKT;
+    Zd = mimo_slice(Tw*Stmp/gam,onesKT,C);
+    ZD[:,zix,ax] = Zd;
+
+    # ax = ax+1;
+    # algNames[ax]= "MMSE Brun"
+    # Bw, Tw = brun([Hhat; sigmaSq*complex(IK)])
+    # Ti = inv(Tw);
+    # Wlr = Bw/(Bw'*Bw);
+    # Ztmp = Wlr'*[Yd; zeros(K,Td)];
+    # Stmp = roundc((Ztmp*gam-(1+im)*Ti*onesKT)/2)*2 +(1+im)*Ti*onesKT;
+    # Zd = mimo_slice(Tw*Stmp/gam,onesKT,C);
+    # ZD[:,zix,ax] = Zd;
+
+    ax = ax+1;
+    algNames[ax]= "MMSE Seysen"
+    Bw, Tw = seysen([Hhat; sigmaSq*I]);
+    Ti = inv(Tw);
+    Wlr = Bw/(Bw'*Bw);
+    Ztmp = Wlr'*[Yd; zeros(K,Td)];
     Stmp = roundc((Ztmp*gam-(1+im)*Ti*onesKT)/2)*2 +(1+im)*Ti*onesKT;
     Zd = mimo_slice(Tw*Stmp/gam,onesKT,C);
     ZD[:,zix,ax] = Zd;
@@ -267,25 +306,27 @@ for ix = 1:Ns
     Sp = zeros(Complex{Float64},K,Td);
     for tt=1:Td
         for kx=1:K
-            Sp[kx,tt] = siso_demod(Yp[kx,tt] -B[kx,:].'*Sp[:,tt],C);
+            Sp[kx,tt] = siso_demod(Yp[kx,tt] -transpose(B[kx,:])*Sp[:,tt],C);
         end
     end
     ZD[:,zix,ax] = mimo_slice(P*Sp,onesKT,C);
     
-    ax = ax+1;
-    algNames[ax] = "IRC";
-    Hhat = (Yt*St')/(St*St');
-    Wp = Yt-Hhat*St;     # To be used to estimate the noise variance
-    Rhat = Wp*Wp'/(max(Tt-K,1)*M);
-    Ri = inv(Rhat + trace(Rhat)/1e14*complex(eye(M)));
-    W = Ri*Hhat/(Hhat'*Ri*Hhat);
-    Zd = mimo_slice(W'*Yd,W'*Hhat*onesKT,C);
-    ZD[:,zix,ax] = Zd;
+    # ax = ax+1;
+    # algNames[ax] = "IRC";
+    # Hhat = (Yt*St')/(St*St');
+    # Wp = Yt-Hhat*St;     # To be used to estimate the noise variance
+    # Rhat = Wp*Wp'/(max(Tt-K,1)*M);
+    # Ri = inv(Rhat + tr(Rhat)/1e14*complex(IM));
+    # W = Ri*Hhat/(Hhat'*Ri*Hhat);
+    # Zd = mimo_slice(W'*Yd,W'*Hhat*onesKT,C);
+    # ZD[:,zix,ax] = Zd;
 
+    ## doesn't work for interference cases
     ax = ax+1;
     algNames[ax] = "Sphere Decoder";
-    z_est = hard_sphere(Ydc,Hhatc/gam,Mp);
+    z_est = hardsphere(Ydc,Hhatc/gam,Mp);
     Zd = z_est[ri,:]*Mp + z_est[ii,:]
+    Zd = Int.((Zd.+Mc.+1)./2 .-1)
     ZD[:,zix,ax] = Zd;
 
 end
@@ -297,6 +338,9 @@ ser = zeros(Nalgs);
 #Calculate symbol error rate
 for ax = 1:Nalgs
     ser[ax] = mean(map(!=,ZZ,ZD[:,:,ax]));
+    if ser[ax]==0
+        ser[ax] = 1e-6
+    end
     if ax<6
         @printf("    %7.4f",ser[ax])
     end 
